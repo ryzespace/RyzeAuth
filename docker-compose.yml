@@ -1,0 +1,107 @@
+name: ryzeauth
+
+services:
+  keycloak-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env and set a secret}
+    volumes: [keycloak-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  keycloak:
+    build:
+      context: .
+      dockerfile: deploy/keycloak/Dockerfile
+    image: ryzeauth-keycloak:dev
+    command: ["start-dev", "--import-realm", "--http-port=8080"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      RYZEAUTH_EVENT_ENDPOINT: http://api:8080/internal/keycloak/events
+      RYZEAUTH_RISK_ENDPOINT: http://api:8080/internal/keycloak/risk-assessments
+      RYZEAUTH_EVENT_SIGNING_KEY: ${KEYCLOAK_EVENT_SIGNING_KEY}
+      RYZEAUTH_CAPTCHA_RISK_THRESHOLD: ${RYZEAUTH_CAPTCHA_RISK_THRESHOLD:-50}
+      RYZEAUTH_TURNSTILE_SITE_KEY: ${RYZEAUTH_TURNSTILE_SITE_KEY:-}
+      RYZEAUTH_TURNSTILE_SECRET_KEY: ${RYZEAUTH_TURNSTILE_SECRET_KEY:-}
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    ports: ["8080:8080"]
+    volumes:
+      - ./deploy/keycloak/realm:/opt/keycloak/data/import:ro
+      - ./deploy/keycloak/themes:/opt/keycloak/themes:ro
+
+  ryzeauth-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ryzeauth
+      POSTGRES_USER: ryzeauth
+      POSTGRES_PASSWORD: ${RYZEAUTH_DB_PASSWORD:?set RYZEAUTH_DB_PASSWORD in .env}
+    ports: ["5433:5432"]
+    volumes: [ryzeauth-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ryzeauth -d ryzeauth"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-development-only-change-me}"]
+    volumes: [redis:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-development-only-change-me}
+
+  api:
+    build:
+      context: .
+      dockerfile: src/RyzeAuth.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__ApplyMigrationsOnStartup: "true"
+      ConnectionStrings__RyzeAuth: Host=ryzeauth-db;Port=5432;Database=ryzeauth;Username=ryzeauth;Password=${RYZEAUTH_DB_PASSWORD}
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-development-only-change-me}
+      Keycloak__Authority: http://keycloak:8080/realms/ryzespace
+      Keycloak__AdminBaseUrl: http://keycloak:8080
+      Keycloak__Realm: ryzespace
+      Keycloak__AdminClientId: ryzeauth-admin
+      Keycloak__AdminClientSecret: ${RYZEAUTH_ADMIN_CLIENT_SECRET}
+      Keycloak__ValidAudience: ryzeauth-api
+      Security__TokenDigestKey: ${TOKEN_DIGEST_KEY:?set TOKEN_DIGEST_KEY in .env}
+      Security__KeycloakEventSigningKey: ${KEYCLOAK_EVENT_SIGNING_KEY:?set KEYCLOAK_EVENT_SIGNING_KEY in .env}
+      Security__PublicResetBaseUrl: https://auth.ryze.localhost/reset-password
+      Security__RequireBreachCheck: "false"
+      Smtp__Enabled: "false"
+    depends_on:
+      ryzeauth-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    ports: ["8081:8080"]
+
+volumes:
+  keycloak-db:
+  ryzeauth-db:
+  redis:
