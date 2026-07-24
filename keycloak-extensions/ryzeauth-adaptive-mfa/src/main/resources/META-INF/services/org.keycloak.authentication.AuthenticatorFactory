@@ -1,0 +1,3 @@
+space.ryze.auth.risk.RiskStepUpAuthenticatorFactory
+space.ryze.auth.risk.RiskStepUpConditionFactory
+space.ryze.auth.risk.TurnstileGateAuthenticatorFactory
