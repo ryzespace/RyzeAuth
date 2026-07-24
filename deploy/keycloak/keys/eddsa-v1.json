@@ -1,0 +1,11 @@
+{
+  "name": "ryzeauth-eddsa-v1",
+  "providerId": "eddsa-generated",
+  "providerType": "org.keycloak.keys.KeyProvider",
+  "config": {
+    "enabled": ["true"],
+    "active": ["true"],
+    "priority": ["200"],
+    "algorithm": ["EdDSA"]
+  }
+}

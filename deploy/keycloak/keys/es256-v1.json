@@ -1,0 +1,11 @@
+{
+  "name": "ryzeauth-es256-v1",
+  "providerId": "ecdsa-generated",
+  "providerType": "org.keycloak.keys.KeyProvider",
+  "config": {
+    "enabled": ["true"],
+    "active": ["true"],
+    "priority": ["190"],
+    "algorithm": ["ES256"]
+  }
+}

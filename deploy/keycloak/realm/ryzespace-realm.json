@@ -1,0 +1,278 @@
+{
+  "realm": "ryzespace",
+  "displayName": "RyzeSpace",
+  "enabled": true,
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": true,
+  "rememberMe": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "verifyEmail": true,
+  "sslRequired": "external",
+  "accessTokenLifespan": 600,
+  "accessTokenLifespanForImplicitFlow": 600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 2592000,
+  "offlineSessionIdleTimeout": 2592000,
+  "offlineSessionMaxLifespanEnabled": true,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanLogin": 1800,
+  "accessCodeLifespanUserAction": 900,
+  "actionTokenGeneratedByAdminLifespan": 900,
+  "actionTokenGeneratedByUserLifespan": 900,
+  "attributes": {
+    "actionTokenGeneratedByUserLifespan.verify-email": "86400",
+    "actionTokenGeneratedByUserLifespan.reset-credentials": "900",
+    "oauth2DeviceCodeLifespan": "600",
+    "oauth2DevicePollingInterval": "5",
+    "parRequestUriLifespan": "60"
+  },
+  "passwordPolicy": "hashAlgorithm(argon2) and hashIterations(3) and length(12) and notUsername(undefined) and notEmail(undefined) and passwordHistory(5) and hibpBreach()",
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "otpSupportedApplications": [
+    "totpAppGoogleName",
+    "totpAppFreeOTPName",
+    "totpAppMicrosoftAuthenticatorName"
+  ],
+  "webAuthnPolicyRpEntityName": "RyzeSpace",
+  "webAuthnPolicyRpId": "auth.ryzespace.example",
+  "webAuthnPolicySignatureAlgorithms": [
+    "ES256",
+    "RS256",
+    "EdDSA"
+  ],
+  "webAuthnPolicyAttestationConveyancePreference": "none",
+  "webAuthnPolicyAuthenticatorAttachment": "not specified",
+  "webAuthnPolicyRequireResidentKey": "not specified",
+  "webAuthnPolicyUserVerificationRequirement": "preferred",
+  "webAuthnPolicyCreateTimeout": 0,
+  "webAuthnPolicyAvoidSameAuthenticatorRegister": true,
+  "webAuthnPolicyAcceptableAaguids": [],
+  "webAuthnPolicyPasswordlessRpEntityName": "RyzeSpace",
+  "webAuthnPolicyPasswordlessRpId": "auth.ryzespace.example",
+  "webAuthnPolicyPasswordlessSignatureAlgorithms": [
+    "ES256",
+    "RS256",
+    "EdDSA"
+  ],
+  "webAuthnPolicyPasswordlessAttestationConveyancePreference": "none",
+  "webAuthnPolicyPasswordlessAuthenticatorAttachment": "not specified",
+  "webAuthnPolicyPasswordlessRequireResidentKey": "Yes",
+  "webAuthnPolicyPasswordlessUserVerificationRequirement": "required",
+  "webAuthnPolicyPasswordlessCreateTimeout": 0,
+  "webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister": true,
+  "webAuthnPolicyPasswordlessAcceptableAaguids": [],
+  "eventsEnabled": true,
+  "eventsListeners": [
+    "jboss-logging",
+    "email",
+    "ryzeauth-security-events"
+  ],
+  "enabledEventTypes": [
+    "LOGIN",
+    "LOGIN_ERROR",
+    "LOGOUT",
+    "LOGOUT_ERROR",
+    "REGISTER",
+    "REGISTER_ERROR",
+    "UPDATE_PASSWORD",
+    "UPDATE_PASSWORD_ERROR",
+    "UPDATE_EMAIL",
+    "UPDATE_EMAIL_ERROR",
+    "UPDATE_TOTP",
+    "UPDATE_TOTP_ERROR",
+    "REMOVE_TOTP",
+    "REMOVE_TOTP_ERROR",
+    "EXECUTE_ACTIONS",
+    "EXECUTE_ACTIONS_ERROR",
+    "DELETE_ACCOUNT",
+    "DELETE_ACCOUNT_ERROR"
+  ],
+  "eventsExpiration": 2592000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "defaultRole": {
+    "name": "ryzeauth-user",
+    "description": "Base RyzeSpace user role",
+    "composite": false,
+    "clientRole": false,
+    "containerId": "ryzespace"
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "ryzeauth-user",
+        "description": "Base authenticated user"
+      },
+      {
+        "name": "ryzeauth-security-admin",
+        "description": "Security operations administrator"
+      }
+    ]
+  },
+  "requiredActions": [
+    {
+      "alias": "VERIFY_EMAIL",
+      "name": "Verify Email",
+      "providerId": "VERIFY_EMAIL",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10
+    },
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 20
+    },
+    {
+      "alias": "CONFIGURE_RECOVERY_AUTHN_CODES",
+      "name": "Generate Recovery Authentication Codes",
+      "providerId": "CONFIGURE_RECOVERY_AUTHN_CODES",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 30
+    },
+    {
+      "alias": "webauthn-register",
+      "name": "Webauthn Register",
+      "providerId": "webauthn-register",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 40
+    },
+    {
+      "alias": "webauthn-register-passwordless",
+      "name": "Webauthn Register Passwordless",
+      "providerId": "webauthn-register-passwordless",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 50
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "ryzeauth-api-audience",
+      "description": "Adds the RyzeAuth API audience to access tokens.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "ryzeauth-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "ryzeauth-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "ryzeauth-api",
+      "name": "RyzeAuth Resource API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    },
+    {
+      "clientId": "ryzeauth-web",
+      "name": "RyzeAuth Web / BFF",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://app.ryzespace.example/*",
+        "https://app.ryze.localhost/*"
+      ],
+      "webOrigins": [
+        "https://app.ryzespace.example",
+        "https://app.ryze.localhost"
+      ],
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles",
+        "ryzeauth-api-audience"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://app.ryzespace.example/*##https://app.ryze.localhost/*"
+      }
+    },
+    {
+      "clientId": "ryzeauth-admin",
+      "name": "RyzeAuth control-plane service account",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "dev-ryzeauth-admin-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    },
+    {
+      "clientId": "ryzeauth-internal",
+      "name": "RyzeAuth internal gRPC callers",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "REPLACE_DURING_BOOTSTRAP",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": [
+        "ryzeauth-api-audience"
+      ]
+    }
+  ],
+  "browserSecurityHeaders": {
+    "contentSecurityPolicy": "default-src 'self'; object-src 'none'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'",
+    "xRobotsTag": "none",
+    "xFrameOptions": "DENY",
+    "xContentTypeOptions": "nosniff",
+    "xXSSProtection": "0",
+    "strictTransportSecurity": "max-age=63072000; includeSubDomains; preload",
+    "referrerPolicy": "no-referrer"
+  },
+  "loginTheme": "ryzeauth",
+  "accountTheme": "keycloak.v3",
+  "emailTheme": "keycloak"
+}

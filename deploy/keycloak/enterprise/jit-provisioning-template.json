@@ -1,0 +1,11 @@
+{
+  "identityProviderAlias": "enterprise-saml",
+  "identityProviderMapper": "saml-user-attribute-idp-mapper",
+  "name": "email-to-user-profile",
+  "config": {
+    "attribute.name": "email",
+    "attribute.friendly.name": "email",
+    "user.attribute": "email",
+    "syncMode": "FORCE"
+  }
+}

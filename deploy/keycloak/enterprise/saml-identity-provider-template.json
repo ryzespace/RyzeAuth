@@ -1,0 +1,19 @@
+{
+  "alias": "enterprise-saml",
+  "providerId": "saml",
+  "enabled": false,
+  "trustEmail": true,
+  "storeToken": false,
+  "addReadTokenRoleOnCreate": false,
+  "firstBrokerLoginFlowAlias": "first broker login",
+  "config": {
+    "singleSignOnServiceUrl": "https://idp.example.com/sso",
+    "singleLogoutServiceUrl": "https://idp.example.com/slo",
+    "entityId": "https://idp.example.com/entity",
+    "signatureAlgorithm": "RSA_SHA256",
+    "wantAuthnRequestsSigned": "true",
+    "wantAssertionsSigned": "true",
+    "wantAssertionsEncrypted": "true",
+    "validateSignature": "true"
+  }
+}

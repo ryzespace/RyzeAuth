@@ -1,0 +1,16 @@
+{
+  "clientId": "ryzeauth-scim",
+  "name": "RyzeAuth SCIM Provisioning",
+  "enabled": false,
+  "protocol": "openid-connect",
+  "publicClient": false,
+  "standardFlowEnabled": false,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": true,
+  "defaultClientScopes": [
+    "ryzeauth-api-audience",
+    "scim:users:read",
+    "scim:users:write"
+  ]
+}
