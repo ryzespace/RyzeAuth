@@ -1,0 +1,122 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore RyzeAuth.sln
+      - name: Build
+        run: dotnet build RyzeAuth.sln --configuration Release --no-restore
+      - name: Unit tests
+        run: dotnet test tests/RyzeAuth.UnitTests/RyzeAuth.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=unit.trx"
+      - name: PostgreSQL integration tests (Testcontainers)
+        run: dotnet test tests/RyzeAuth.IntegrationTests/RyzeAuth.IntegrationTests.csproj --configuration Release --no-build --logger "trx;LogFileName=integration.trx"
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/*.trx"
+
+
+  keycloak-extensions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build security event extension
+        run: mvn -q -f keycloak-extensions/ryzeauth-security-events/pom.xml -DskipTests clean package
+      - name: Build magic link extension
+        run: mvn -q -f keycloak-extensions/ryzeauth-magic-link/pom.xml -DskipTests clean package
+      - name: Build adaptive MFA extension
+        run: mvn -q -f keycloak-extensions/ryzeauth-adaptive-mfa/pom.xml -DskipTests clean package
+      - name: Build HIBP password policy extension
+        run: mvn -q -f keycloak-extensions/ryzeauth-hibp-password-policy/pom.xml -DskipTests clean package
+      - name: Upload extension JARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: keycloak-extensions
+          path: keycloak-extensions/**/target/*.jar
+
+  e2e-keycloak:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Prepare CI secrets
+        run: |
+          cp .env.example .env
+          sed -i "s|TOKEN_DIGEST_KEY=.*|TOKEN_DIGEST_KEY=$(openssl rand -base64 32)|" .env
+          sed -i "s|KEYCLOAK_EVENT_SIGNING_KEY=.*|KEYCLOAK_EVENT_SIGNING_KEY=$(openssl rand -base64 32)|" .env
+          sed -i 's|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=ci-keycloak-password-please-change|' .env
+          sed -i 's|RYZEAUTH_DB_PASSWORD=.*|RYZEAUTH_DB_PASSWORD=ci-ryzeauth-password-please-change|' .env
+          sed -i 's|KEYCLOAK_ADMIN_PASSWORD=.*|KEYCLOAK_ADMIN_PASSWORD=ci-keycloak-admin-password-please-change|' .env
+      - name: Start isolated ecosystem
+        run: docker compose up -d --build
+      - name: Wait for OIDC discovery and API readiness
+        run: |
+          discovery_ready=0
+          for i in {1..60}; do
+            if curl --fail --silent http://localhost:8080/realms/ryzespace/.well-known/openid-configuration; then
+              discovery_ready=1
+              break
+            fi
+            sleep 3
+          done
+          test "$discovery_ready" = 1 || { docker compose logs; exit 1; }
+          for i in {1..60}; do
+            curl --fail --silent http://localhost:8081/health/live && exit 0
+            sleep 3
+          done
+          docker compose logs
+          exit 1
+      - name: Independent ecosystem smoke test
+        run: |
+          dotnet run --project tools/RyzeAuth.EcosystemTester -- \
+            --api http://localhost:8081 \
+            --authority http://localhost:8080/realms/ryzespace \
+            --allow-http \
+            --report artifacts/ecosystem-smoke.json
+      - name: Restore and build E2E project
+        run: dotnet build tests/RyzeAuth.E2ETests/RyzeAuth.E2ETests.csproj --configuration Release
+      - name: Install Chromium
+        run: pwsh tests/RyzeAuth.E2ETests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+      - name: Execute Keycloak E2E journey
+        env:
+          RYZEAUTH_E2E_BASE_URL: http://localhost:8080
+        run: dotnet test tests/RyzeAuth.E2ETests/RyzeAuth.E2ETests.csproj --configuration Release --no-build --logger "trx;LogFileName=e2e.trx"
+      - name: Upload independent tester report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecosystem-tester-report
+          path: artifacts/ecosystem-smoke.json
+          if-no-files-found: ignore
+      - name: Compose diagnostics
+        if: always()
+        run: docker compose logs --no-color
+      - name: Stop Compose
+        if: always()
+        run: docker compose down -v
